@@ -41,27 +41,15 @@ int main() {
         while ( myfile.good() )
         {   
             getline (myfile,line);
-            // creds_struct cred;
-            //creds[i].push_back(line);
-            //creds.username = line;
-
             //https://www.geeksforgeeks.org/program-to-parse-a-comma-separated-string-in-c/#:~:text=Get%20the%20substring%20if%20the,and%20stored%20in%20the%20vector
-            
             stringstream ss(line);
             // string substr;
             while (ss.good()) {
                 string substr;
                 getline(ss, substr, ',');
-                //cout<<substr<<endl;
                 v.push_back(substr);
             }
-            //printf("------\n");
-            //cout<<v[0]<<endl;
-            // cred.username = line;
-            // cred.password = "lol";
-            // creds.push_back(cred);
-            //cout << line << endl;
-            //i++;
+            
         }
         myfile.close();
     }
@@ -70,25 +58,18 @@ int main() {
         cout << "Unable to open file"; 
     }
     creds_struct cred;
-    for (size_t i=0;i<v.size();i+=2){
-        // cout<<v[i]<<endl;
+    for (size_t i=0;i<v.size();i+=2)
+    {
         cred.username = v[i];
         cred.password = v[i+1];
         creds.push_back(cred);
         
     }
-    for(int i=0;i<creds.size();i++){
+    for(int i=0;i<creds.size();i++)
+    {
         cout<<creds[i].username<<endl;
         cout<<creds[i].password<<endl;
     }
-    // cout<<creds[0].username<<endl;
-    // cout<<creds[0].password<<endl;
-    // cout<<creds[1].username<<endl;
-    // cout<<creds[1].password<<endl;
-    //cout<<creds[1].username<<endl;
-    // for (size_t i = 0; i < v.size(); i++){
-    //     cout << v[i] << endl;
-    // }   
 
     return 0;
 }
