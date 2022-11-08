@@ -26,18 +26,15 @@ struct creds_struct{
     string password;
 };
 
-
-
 int main() {
     //https://stackoverflow.com/questions/6399822/reading-a-text-file-fopen-vs-ifstream
     string line;
     ifstream myfile ("cred.txt");
-    vector <creds_struct> creds;
+    vector<creds_struct> creds;
     vector<string> v;
     //creds_struct creds;
     if (myfile.is_open())
     {
-        int i=0;
         while ( myfile.good() )
         {   
             getline (myfile,line);
@@ -55,7 +52,8 @@ int main() {
     }
     else 
     {  
-        cout << "Unable to open file"; 
+        cout << "Unable to open file" << endl; 
+        return 0;
     }
     creds_struct cred;
     for (size_t i=0;i<v.size();i+=2)
