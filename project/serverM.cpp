@@ -59,23 +59,7 @@ void encrypt(char msg[50]){
 
 
 int main() {
-    cout<<"Please enter the username: ";
-    char username[50];
-    cin.getline(username,50); //take the message as input
-    //int i, j, length,key;
-    encrypt(username);
-    cout<<"Please enter the password: ";
-    char password[50];
-    cin.getline(password,50);
-    encrypt(password);
-    printf("Encrypted message: %s \n", username);
-    printf("Encrypted password: %s \n", password);
-    char encryptedInput[100];
-    strcpy(encryptedInput,username);
-    strcat(encryptedInput,",");
-    strcat(encryptedInput,password);
-    strcat(encryptedInput,"\0");
-    printf("encryted msg: %s\n",encryptedInput);
+    
     //SOURCE from beej
     int sockfd;
 	struct addrinfo hints, *servinfo, *p;
@@ -106,27 +90,60 @@ int main() {
 		fprintf(stderr, "talker: failed to create socket\n");
 		return 2;
 	}
-
-	if ((numbytes = sendto(sockfd, encryptedInput, strlen(encryptedInput), 0,
+    int count = 0;
+    while(count < 3){
+        cout<<"Please enter the username: ";
+        char username[50];
+        cin.getline(username,50); //take the message as input
+        //int i, j, length,key;
+        encrypt(username);
+        cout<<"Please enter the password: ";
+        char password[50];
+        cin.getline(password,50);
+        encrypt(password);
+        printf("Encrypted message: %s \n", username);
+        printf("Encrypted password: %s \n", password);
+        char encryptedInput[100];
+        strcpy(encryptedInput,username);
+        strcat(encryptedInput,",");
+        strcat(encryptedInput,password);
+        strcat(encryptedInput,"\0");
+        printf("encryted msg: %s\n",encryptedInput);
+        if ((numbytes = sendto(sockfd, encryptedInput, strlen(encryptedInput), 0,
 			 p->ai_addr, p->ai_addrlen)) == -1) {
 		perror("talker: sendto");
 		exit(1);
-	}
+	    }
+
+        printf("talker: sent %d bytes to %s\n", numbytes, encryptedInput);
+
+        char buf[MAXBUFLEN];
+        struct sockaddr_storage their_addr;
+        socklen_t addr_len;
+        addr_len = sizeof their_addr;
+        if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
+            (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+            perror("recvfrom");
+            exit(1);
+        }
+        cout<<buf<<endl;
+        if (buf[0]!='2'){
+            count++;
+        }
+        else{
+            cout<<"Success"<<endl;
+            break;
+        }
+
+
+
+    }
+
+	
 
 	freeaddrinfo(servinfo);
 
-	printf("talker: sent %d bytes to %s\n", numbytes, encryptedInput);
-
-    char buf[MAXBUFLEN];
-    struct sockaddr_storage their_addr;
-    socklen_t addr_len;
-    addr_len = sizeof their_addr;
-    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
-        (struct sockaddr *)&their_addr, &addr_len)) == -1) {
-        perror("recvfrom");
-        exit(1);
-    }
-    cout<<buf<<endl;
+	
 	close(sockfd);
    
 }
