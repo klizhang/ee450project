@@ -19,6 +19,7 @@
 
 #define LOCALHOST "127.0.0.1" // Host address
 #define SERVERPORT "21606"	// the port users will be connecting to
+#define MAXBUFLEN 100
 
 using namespace std;
 
@@ -115,6 +116,17 @@ int main() {
 	freeaddrinfo(servinfo);
 
 	printf("talker: sent %d bytes to %s\n", numbytes, encryptedInput);
+
+    char buf[MAXBUFLEN];
+    struct sockaddr_storage their_addr;
+    socklen_t addr_len;
+    addr_len = sizeof their_addr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
+        (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+        perror("recvfrom");
+        exit(1);
+    }
+    cout<<buf<<endl;
 	close(sockfd);
    
 }

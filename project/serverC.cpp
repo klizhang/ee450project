@@ -36,7 +36,9 @@ void split(char buf[], char username[], char password[]) {
       username = start_ptr;
       start_ptr = tab_ptr;
       printf("start points to: %s",start_ptr);
+
       password = start_ptr;
+
     }
     else{ 
       printf("Error,no 1st tab found \n");
@@ -76,7 +78,6 @@ int main(void) {
                 getline(ss, substr, ',');
                 v.push_back(substr);
             }
-            
         }
         myfile.close();
     }
@@ -89,6 +90,8 @@ int main(void) {
     for (size_t i=0;i<v.size();i+=2)
     {
         cred.username = v[i];
+        int length = v[i+1].length()-1;
+        v[i+1][length] = '\0';
         cred.password = v[i+1];
         creds.push_back(cred);
     }
@@ -101,7 +104,7 @@ int main(void) {
     struct sockaddr_storage their_addr;
     char buf[MAXBUFLEN];
     socklen_t addr_len;
-    char s[INET_ADDRSTRLEN];
+    //char s[INET_ADDRSTRLEN];
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // set to AF_INET to use IPv4
@@ -146,17 +149,17 @@ int main(void) {
             exit(1);
         }
 
-        printf("listener: got packet from %s\n",
-            inet_ntop(their_addr.ss_family,
-                get_in_addr((struct sockaddr *)&their_addr),
-                s, sizeof s));
-        printf("listener: packet is %d bytes long\n", numbytes);
+        // printf("The ServerC received an authentication request from the Main Server. %s\n",
+        //     inet_ntop(their_addr.ss_family,
+        //         get_in_addr((struct sockaddr *)&their_addr),
+        //         s, sizeof s));
+        printf("The ServerC received an authentication request from the Main Server.\n");
+        //printf("listener: packet is %d bytes long\n", numbytes);
         buf[numbytes] = '\0';
-        printf("listener: packet contains \"%s\"\n", buf);
+        //printf("listener: packet contains \"%s\"\n", buf);
 
         vector<string> v;
         stringstream ss(buf);
-    
         while (ss.good()) {
             string substr;
             getline(ss, substr, ',');
@@ -164,39 +167,41 @@ int main(void) {
         }
         string username = v[0];
         string password = v[1];
-        // for (size_t i = 0; i < v.size(); i++)
-        //     cout << v[i] << endl;
-
-        int auth = 0;
+        char auth[2];
+        //int auth = 0;
+        //char* auth[MAXBUFLEN];
+        auth[0] = '0';
+        //strcpy(auth,'0');
+        //auth = "FAIL_NO_USER";
         for(size_t i=0;i<creds.size();i++)
-        {
-            //cout<<creds[i].username<<endl;
-            //cout<<creds[i].password<<endl;
-            //printf("|%s|",creds[i].password.c_str());
+        {    
             if(strcmp(username.c_str(),creds[i].username.c_str())==0){
                 cout<<"got username right"<<endl;
-                auth = 1;
-                cout<<strlen(password.c_str())<<endl;
-                cout<<strlen(creds[i].password.c_str())<<endl;
-                printf("--%s --",creds[i].password.c_str());
-                cout<<password<<endl;
-                cout<<creds[i].password<<endl;
+                //auth = 1;     
+                //auth = "FAIL_PASS_NO_MATCH";
+                //strcpy(auth,'1');
+                auth[0]='1';
                 if(strcmp(password.c_str(),creds[i].password.c_str())==0){
-                    auth = 2;
-                    break;
-                }
-                if(password.c_str() == creds[i].password.c_str()){
-                    auth = 2;
+                    cout<<"both right"<<endl;
+                    //auth = 2;
+                    //auth = "PASS";
+                    //strcpy(auth,'2');
+                    auth[0]='2';
                     break;
                 }
                 break;
             }
         }
+        auth[1] = '\0';
+
+        if ((numbytes = sendto(sockfd, auth, strlen(auth), 
+          0,(struct sockaddr *)&their_addr, addr_len)) == -1) {
+		    perror("serverC: sendto");
+		    exit(1);
+	    }
+        cout<<"The ServerC finished sending the response to the Main Server.";
         cout<<auth<<endl;
-        
-        
     }
     close(sockfd);
-
     return 0;
 }
