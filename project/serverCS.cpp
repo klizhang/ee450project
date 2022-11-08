@@ -17,7 +17,7 @@
 
 #include <bits/stdc++.h>
 
-#define LOCAL_HOST "127.0.0.1" // Host address
+#define LOCALHOST "127.0.0.1" // Host address
 
 using namespace std;
 

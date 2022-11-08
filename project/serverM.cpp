@@ -17,16 +17,13 @@
 
 #include <bits/stdc++.h>
 
-#define LOCAL_HOST "127.0.0.1" // Host address
+#define LOCALHOST "127.0.0.1" // Host address
+#define SERVERPORT "21606"	// the port users will be connecting to
 
 using namespace std;
 
-int main() {
-    //https://www.tutorialspoint.com/cplusplus-program-to-implement-caesar-cypher#
-    cout<<"Enter the message: ";
-    char msg[100];
-    cin.getline(msg,100); //take the message as input
-    //int i, j, length,key;
+void encrypt(char msg[50]){
+//https://www.tutorialspoint.com/cplusplus-program-to-implement-caesar-cypher#
     int key = 4;
     //int length = strlen(msg);
     char ch;
@@ -57,6 +54,67 @@ int main() {
             msg[i] = ch;
         }
     }
-    printf("Encrypted message: %s \n", msg);
+}
+
+
+int main() {
+    cout<<"Please enter the username: ";
+    char username[50];
+    cin.getline(username,50); //take the message as input
+    //int i, j, length,key;
+    encrypt(username);
+    cout<<"Please enter the password: ";
+    char password[50];
+    cin.getline(password,50);
+    encrypt(password);
+    printf("Encrypted message: %s \n", username);
+    printf("Encrypted password: %s \n", password);
+    char encryptedInput[100];
+    strcpy(encryptedInput,username);
+    strcat(encryptedInput,",");
+    strcat(encryptedInput,password);
+    strcat(encryptedInput,"\0");
+    printf("encryted msg: %s\n",encryptedInput);
+    //SOURCE from beej
+    int sockfd;
+	struct addrinfo hints, *servinfo, *p;
+	int rv;
+	int numbytes;
+
+	memset(&hints, 0, sizeof hints);
+	hints.ai_family = AF_INET; // set to AF_INET to use IPv4
+	hints.ai_socktype = SOCK_DGRAM;
+
+	if ((rv = getaddrinfo(LOCALHOST, SERVERPORT, &hints, &servinfo)) != 0) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+		return 1;
+	}
+
+	// loop through all the results and make a socket
+	for(p = servinfo; p != NULL; p = p->ai_next) {
+		if ((sockfd = socket(p->ai_family, p->ai_socktype,
+				p->ai_protocol)) == -1) {
+			perror("talker: socket");
+			continue;
+		}
+
+		break;
+	}
+
+	if (p == NULL) {
+		fprintf(stderr, "talker: failed to create socket\n");
+		return 2;
+	}
+
+	if ((numbytes = sendto(sockfd, encryptedInput, strlen(encryptedInput), 0,
+			 p->ai_addr, p->ai_addrlen)) == -1) {
+		perror("talker: sendto");
+		exit(1);
+	}
+
+	freeaddrinfo(servinfo);
+
+	printf("talker: sent %d bytes to %s\n", numbytes, encryptedInput);
+	close(sockfd);
    
 }
