@@ -91,9 +91,11 @@ int main() {
 		return 2;
 	}
     int count = 0;
-    while(count < 3){
+    int maxTries = 3;
+    char username[50];
+    while(count < maxTries){
         cout<<"Please enter the username: ";
-        char username[50];
+        //char username[50];
         cin.getline(username,50); //take the message as input
         //int i, j, length,key;
         encrypt(username);
@@ -127,18 +129,38 @@ int main() {
             exit(1);
         }
         cout<<buf<<endl;
-        if (buf[0]!='2'){
+        if(buf[0]=='0'){
             count++;
+            printf("%s received the result of authentication using TCP over port %s.",username,SERVERPORT);
+            printf("Authentication failed: Username Does not exist \n");
+            printf("Attempts remaining: %d \n",maxTries-count);
         }
-        else{
+        else if(buf[0]=='1'){
+            count++;
+            printf("%s received the result of authentication using TCP over port %s.",username,SERVERPORT);
+            printf("Authentication failed: Password does not match \n");
+            printf("Attempts remaining: %d \n",maxTries-count);
+        }
+        else if(buf[0]=='2'){
             cout<<"Success"<<endl;
             break;
         }
+        else{
+            perror("auth");
+            exit(1);
+        }
+        
 
 
 
     }
-
+    if(count==maxTries){
+        printf("Authentication Failed for 3 attempts. Client will shut down. \n");
+    }
+    else{
+        printf("%s received the result of authentication using TCP over port %s.",username,SERVERPORT);
+        printf("Authentication is successful \n");
+    }
 	
 
 	freeaddrinfo(servinfo);
