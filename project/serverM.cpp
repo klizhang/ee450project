@@ -213,7 +213,6 @@ int main() {
             return 2;
         }
 
-        int sockfdEE;
         struct addrinfo hintsEE, *servinfoEE, *pEE;
         int rvEE;
         int numbytesEE;
@@ -275,6 +274,7 @@ int main() {
                 printf("talker: sent %d bytes to %s\n", numbytes, courseNum);
 
                 char buf[MAXBUFLEN];
+                memset(buf, 0, sizeof buf);
                 struct sockaddr_storage their_addr;
                 socklen_t addr_len;
                 addr_len = sizeof their_addr;
@@ -295,6 +295,7 @@ int main() {
                 printf("talker: sent %d bytes to %s\n", numbytesEE, courseNum);
 
                 char buf[MAXBUFLEN];
+                memset(buf, 0, sizeof buf);
                 struct sockaddr_storage their_addr;
                 socklen_t addr_len;
                 addr_len = sizeof their_addr;
