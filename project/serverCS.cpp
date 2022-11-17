@@ -167,7 +167,7 @@ int main() {
                 }
                 else{
                     responseCS = "Wrong category";
-                    printf("Wrong category: %s, the only valid categories are (Credit / Professor / Days / CourseName)",category.c_str());
+                    printf("Wrong category: %s, the only valid categories are (Credit / Professor / Days / CourseName) \n",category.c_str());
                 }
                 break;
             }

@@ -1,4 +1,4 @@
-all: serverM serverCS serverEE serverC 
+all: serverM serverCS serverEE serverC client
 
 serverM: serverM.cpp
 	g++ -g -Wall -std=c++11 serverM.cpp -o serverM
@@ -11,6 +11,9 @@ serverEE: serverEE.cpp
 
 serverC: serverC.cpp
 	g++ -g -Wall serverC.cpp -o serverC
+
+client: client.cpp
+	g++ -g -Wall client.cpp -o client
 
 clean:
 	rm -f *.o all

@@ -104,7 +104,6 @@ int main(void) {
     struct sockaddr_storage their_addr;
     char buf[MAXBUFLEN];
     socklen_t addr_len;
-    //char s[INET_ADDRSTRLEN];
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // set to AF_INET to use IPv4
@@ -149,10 +148,6 @@ int main(void) {
             exit(1);
         }
 
-        // printf("The ServerC received an authentication request from the Main Server. %s\n",
-        //     inet_ntop(their_addr.ss_family,
-        //         get_in_addr((struct sockaddr *)&their_addr),
-        //         s, sizeof s));
         printf("The ServerC received an authentication request from the Main Server.\n");
         //printf("listener: packet is %d bytes long\n", numbytes);
         buf[numbytes] = '\0';

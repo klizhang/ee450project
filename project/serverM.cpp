@@ -18,9 +18,11 @@
 #include <bits/stdc++.h>
 
 #define LOCALHOST "127.0.0.1" // Host address
-#define SERVERPORT "21606"	// the port users will be connecting to
+#define CREDPORT "21606"	// the port users will be connecting to
 #define CSPORT "22606"
 #define EEPORT "23606"
+#define UDPMPORT "24606" 
+#define TCPMPORT "25606" //NOT USED
 #define MAXBUFLEN 100
 
 using namespace std;
@@ -72,7 +74,7 @@ int main() {
 	hints.ai_family = AF_INET; // set to AF_INET to use IPv4
 	hints.ai_socktype = SOCK_DGRAM;
 
-	if ((rv = getaddrinfo(LOCALHOST, SERVERPORT, &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo(LOCALHOST, UDPMPORT, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
@@ -84,7 +86,11 @@ int main() {
 			perror("talker: socket");
 			continue;
 		}
-
+        if (bind(sockfd, p->ai_addr, p->ai_addrlen) < 0) {
+            close(sockfd);
+            perror("talker: bind");
+            continue;
+        }
 		break;
 	}
 
@@ -92,6 +98,30 @@ int main() {
 		fprintf(stderr, "talker: failed to create socket\n");
 		return 2;
 	}
+
+    freeaddrinfo(servinfo);
+
+    if ((rv = getaddrinfo(LOCALHOST, CREDPORT, &hints, &servinfo)) != 0) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+		return 1;
+	}
+
+	// loop through all the results and make a socket
+	for(p = servinfo; p != NULL; p = p->ai_next) {
+		if ((socket(p->ai_family, p->ai_socktype,
+				p->ai_protocol)) == -1) {
+			perror("talker: socket");
+			continue;
+		}
+		break;
+	}
+
+	if (p == NULL) {
+		fprintf(stderr, "talker: failed to create socket\n");
+		return 2;
+	}
+    
+    
     int count = 0;
     int maxTries = 3;
     char username[50];
@@ -133,13 +163,13 @@ int main() {
         cout<<buf<<endl;
         if(buf[0]=='0'){
             count++;
-            printf("%s received the result of authentication using TCP over port %s.",username,SERVERPORT);
+            printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
             printf("Authentication failed: Username Does not exist \n");
             printf("Attempts remaining: %d \n",maxTries-count);
         }
         else if(buf[0]=='1'){
             count++;
-            printf("%s received the result of authentication using TCP over port %s.",username,SERVERPORT);
+            printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
             printf("Authentication failed: Password does not match \n");
             printf("Attempts remaining: %d \n",maxTries-count);
         }
@@ -151,28 +181,26 @@ int main() {
             perror("auth");
             exit(1);
         }
-        
-
 
 
     }
     if(count==maxTries){
         printf("Authentication Failed for 3 attempts. Client will shut down. \n");
         freeaddrinfo(servinfo);
-	    close(sockfd);
+	    //close(sockfd);
     }
     else{
-        printf("%s received the result of authentication using TCP over port %s.",username,SERVERPORT);
+        printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
         printf("Authentication is successful \n");
         freeaddrinfo(servinfo);
-	    close(sockfd);
+	    //close(sockfd);
         if ((rv = getaddrinfo(LOCALHOST, CSPORT, &hints, &servinfo)) != 0) {
             fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
             return 1;
         }
         // loop through all the results and make a socket
         for(p = servinfo; p != NULL; p = p->ai_next) {
-            if ((sockfd = socket(p->ai_family, p->ai_socktype,
+            if ((socket(p->ai_family, p->ai_socktype,
                     p->ai_protocol)) == -1) {
                 perror("talker: socket");
                 continue;
@@ -200,7 +228,7 @@ int main() {
         }
         // loop through all the results and make a socket
         for(pEE = servinfoEE; pEE != NULL; pEE = pEE->ai_next) {
-            if ((sockfdEE = socket(pEE->ai_family, pEE->ai_socktype,
+            if ((socket(pEE->ai_family, pEE->ai_socktype,
                     pEE->ai_protocol)) == -1) {
                 perror("talker: socket");
                 continue;
@@ -231,6 +259,12 @@ int main() {
             strcat(combinedInput,category);
             strcat(combinedInput,"\0");
             cout<<combinedInput<<endl;
+            struct sockaddr_in sin;
+            socklen_t len = sizeof(sin);
+            if (getsockname(sockfd, (struct sockaddr *)&sin, &len) == -1)
+                perror("getsockname");
+            else
+                printf("port number in use: %d\n", ntohs(sin.sin_port));
 
             if(courseName.compare("CS")==0){
                 if ((numbytes = sendto(sockfd, combinedInput, strlen(combinedInput), 0,
@@ -253,7 +287,7 @@ int main() {
                 memset(buf, 0, sizeof buf);
             }
             else if(courseName.compare("EE")==0){
-                if ((numbytesEE = sendto(sockfdEE, combinedInput, strlen(combinedInput), 0,
+                if ((numbytesEE = sendto(sockfd, combinedInput, strlen(combinedInput), 0,
                 pEE->ai_addr, pEE->ai_addrlen)) == -1) {
                 perror("talker: sendto");
                 exit(1);
@@ -264,7 +298,7 @@ int main() {
                 struct sockaddr_storage their_addr;
                 socklen_t addr_len;
                 addr_len = sizeof their_addr;
-                if ((numbytesEE = recvfrom(sockfdEE, buf, MAXBUFLEN-1 , 0,
+                if ((numbytesEE = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
                     (struct sockaddr *)&their_addr, &addr_len)) == -1) {
                     perror("recvfrom");
                     exit(1);
@@ -279,7 +313,7 @@ int main() {
             //char encryptedInput[100];
 
         }
-        
+        freeaddrinfo(servinfo);
 
 
 
