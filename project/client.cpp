@@ -18,10 +18,11 @@
 #include <bits/stdc++.h>
 
 #define LOCALHOST "127.0.0.1" // Host address
+#define TCPMPORT "25606" 
 
 using namespace std;
 //From Beej 
-#define PORT "3490" // the port client will be connecting to 
+//#define PORT "3490" // the port client will be connecting to 
 
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
 
@@ -35,24 +36,20 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
-int main(int argc, char *argv[])
+int main()
 {
 	int sockfd, numbytes;  
 	char buf[MAXDATASIZE];
 	struct addrinfo hints, *servinfo, *p;
 	int rv;
-	char s[INET6_ADDRSTRLEN];
-    /*
-	if (argc != 2) {
-	    fprintf(stderr,"usage: client hostname\n");
-	    exit(1);
-	}
-    */
+	//char s[INET6_ADDRSTRLEN];
+    
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
+	hints.ai_flags = AI_PASSIVE; // use my IP
 
-	if ((rv = getaddrinfo(LOCALHOST, PORT, &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo(NULL, TCPMPORT, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
@@ -79,9 +76,9 @@ int main(int argc, char *argv[])
 		return 2;
 	}
 
-	inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
-			s, sizeof s);
-	printf("client: connecting to %s\n", s);
+	// inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
+	// 		s, sizeof s);
+	// printf("client: connecting to %s\n", s);
 
 	freeaddrinfo(servinfo); // all done with this structure
     while(1){
@@ -92,10 +89,16 @@ int main(int argc, char *argv[])
         cout<<"Please enter the password: ";
         char password[50];
         cin.getline(password,50);
-        if (send(sockfd, username, strlen(username), 0) == -1){
+		int sentvalue = strlen(username);
+		if(strlen(username)==0){
+			username[0] = '\n';
+			sentvalue = 1;
+		}
+        if (send(sockfd, username, sentvalue, 0) == -1){
             perror("send");
         }
-
+		printf("%d",strlen(username));
+		printf("sent %s to server",username);
 
         if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
             perror("recv");
@@ -105,6 +108,13 @@ int main(int argc, char *argv[])
         buf[numbytes] = '\0';
 
         printf("client: received '%s'\n",buf);
+
+        if(strcmp(buf,"exit")==0){
+            close(sockfd);
+            exit(0);
+            return 0;
+        }
+
     }
     
 
