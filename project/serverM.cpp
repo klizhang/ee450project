@@ -90,13 +90,14 @@ int main() {
     /*Source from Beej
     Create TCP socket
     */
-    int sockTCP, new_fd,numbytes;  // listen on sock_fd, new connection on new_fd
-	struct addrinfo hints, *servinfo, *p;
-	struct sockaddr_storage their_addr; // connector's address information
+    int sockTCP, new_fd;  // listen on sock_fd, new connection on new_fd
+    struct addrinfo hints, *servinfo, *p;
+	struct sockaddr_storage their_addr_client; // connector's address information (client)
 	socklen_t sin_size;
 	struct sigaction sa;
 	int yes=1;
 	int rv;
+    int numbytes;
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
@@ -146,83 +147,96 @@ int main() {
     */
     
     int sockUDP;
+	struct addrinfo hintsUDP, *servinfoUDP, *pUDP;
+	int rvUDP;
 
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET; // set to AF_INET to use IPv4
-	hints.ai_socktype = SOCK_DGRAM;
+	memset(&hintsUDP, 0, sizeof hintsUDP);
+	hintsUDP.ai_family = AF_INET; // set to AF_INET to use IPv4
+	hintsUDP.ai_socktype = SOCK_DGRAM;
 
-	if ((rv = getaddrinfo(LOCALHOST, UDPMPORT, &hints, &servinfo)) != 0) {
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+	if ((rvUDP = getaddrinfo(LOCALHOST, UDPMPORT, &hintsUDP, &servinfoUDP)) != 0) {
+		fprintf(stderr, "getaddrinfo UDP: %s\n", gai_strerror(rvUDP));
 		return 1;
 	}
 
 	// loop through all the results and make a socket
-	for(p = servinfo; p != NULL; p = p->ai_next) {
+	for(pUDP = servinfoUDP; pUDP != NULL; pUDP = pUDP->ai_next) {
 		if ((sockUDP = socket(p->ai_family, p->ai_socktype,
-				p->ai_protocol)) == -1) {
-			perror("talker: socket");
+				pUDP->ai_protocol)) == -1) {
+			perror("talker UDP: socket");
 			continue;
 		}
-        if (bind(sockUDP, p->ai_addr, p->ai_addrlen) < 0) {
+        if (bind(sockUDP, pUDP->ai_addr, pUDP->ai_addrlen) < 0) {
             close(sockUDP);
-            perror("talker: bind");
+            perror("talker UDP: bind");
             continue;
         }
 		break;
 	}
-	if (p == NULL) {
-		fprintf(stderr, "talker: failed to create socket\n");
+	if (pUDP == NULL) {
+		fprintf(stderr, "talker UDP: failed to create socket\n");
 		return 2;
 	}
-    freeaddrinfo(servinfo);
+    freeaddrinfo(servinfoUDP);
+
     /*Get the address for serverC */
-	struct addrinfo *pC;
-    //struct addrinfo hints, *servinfo, *p;
-    if ((rv = getaddrinfo(LOCALHOST, CREDPORT, &hints, &servinfo)) != 0) {
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+    struct addrinfo hintsC, *servinfoC, *pC;
+    memset(&hintsC, 0, sizeof hintsC);
+	hintsC.ai_family = AF_INET; // set to AF_INET to use IPv4
+	hintsC.ai_socktype = SOCK_DGRAM;
+	int rvC;
+    if ((rvC = getaddrinfo(LOCALHOST, CREDPORT, &hintsC, &servinfoC)) != 0) {
+		fprintf(stderr, "getaddrinfo C: %s\n", gai_strerror(rvC));
 		return 1;
 	}
 
 	// loop through all the results and make a socket
-	for(pC = servinfo; pC != NULL; pC = pC->ai_next) {
+	for(pC = servinfoC; pC != NULL; pC = pC->ai_next) {
 		if ((socket(pC->ai_family, pC->ai_socktype,
 				pC->ai_protocol)) == -1) {
-			perror("talker: socket");
+			perror("talker C: socket");
 			continue;
 		}
 		break;
 	}
 
 	if (pC == NULL) {
-		fprintf(stderr, "talker: failed to create socket Credentials\n");
+		fprintf(stderr, "talker C: failed to create socket Credentials\n");
 		return 2;
 	}
-
+    //freeaddrinfo(servinfoC);
     /*Source from Beej
     Get address of serverCS
     */
-	struct addrinfo *pCS;
-
-    if ((rv = getaddrinfo(LOCALHOST, CSPORT, &hints, &servinfo)) != 0) {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
+    struct addrinfo hintsCS, *servinfoCS, *pCS;
+    memset(&hintsCS, 0, sizeof hintsCS);
+	hintsCS.ai_family = AF_INET; // set to AF_INET to use IPv4
+	hintsCS.ai_socktype = SOCK_DGRAM;
+	int rvCS;
+    if ((rvCS = getaddrinfo(LOCALHOST, CSPORT, &hintsCS, &servinfoCS)) != 0) {
+        fprintf(stderr, "getaddrinfo CS: %s\n", gai_strerror(rvCS));
         return 1;
     }
     // loop through all the results and make a socket
-    for(pCS = servinfo; pCS != NULL; pCS = pCS->ai_next) {
+    for(pCS = servinfoCS; pCS != NULL; pCS = pCS->ai_next) {
         if ((socket(pCS->ai_family, pCS->ai_socktype,
                 pCS->ai_protocol)) == -1) {
-            perror("talker: socket");
+            perror("talker CS: socket");
             continue;
         }
 
         break;
     }
     if (pCS == NULL) {
-        fprintf(stderr, "talker: failed to create socket\n");
+        fprintf(stderr, "talker CS: failed to create socket\n");
         return 2;
     }
+    //freeaddrinfo(servinfoCS);
 
     struct addrinfo hintsEE, *servinfoEE, *pEE;
+    memset(&hintsEE, 0, sizeof hintsEE);
+	hintsEE.ai_family = AF_INET; // set to AF_INET to use IPv4
+	hintsEE.ai_socktype = SOCK_DGRAM;
     int rvEE;
     int numbytesEE;
 
@@ -231,236 +245,234 @@ int main() {
     hintsEE.ai_socktype = SOCK_DGRAM;
 
     if ((rvEE = getaddrinfo(LOCALHOST, EEPORT, &hintsEE, &servinfoEE)) != 0) {
-        fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rvEE));
+        fprintf(stderr, "getaddrinfo EE: %s\n", gai_strerror(rvEE));
         return 1;
     }
     // loop through all the results and make a socket
     for(pEE = servinfoEE; pEE != NULL; pEE = pEE->ai_next) {
         if ((socket(pEE->ai_family, pEE->ai_socktype,
                 pEE->ai_protocol)) == -1) {
-            perror("talker: socket");
+            perror("talker EE: socket");
             continue;
         }
 
         break;
     }
     if (pEE == NULL) {
-        fprintf(stderr, "talker: failed to create socket\n");
+        fprintf(stderr, "talker EE: failed to create socket\n");
         return 2;
     }
-
+    //freeaddrinfo(servinfoEE);
     printf("The main server is up and running.\n");
 
     while(1){
-        sin_size = sizeof their_addr;
-		new_fd = accept(sockTCP, (struct sockaddr *)&their_addr, &sin_size);
+        sin_size = sizeof their_addr_client;
+		new_fd = accept(sockTCP, (struct sockaddr *)&their_addr_client, &sin_size);
 		if (new_fd == -1) {
 			perror("accept");
-			// continue;
-			
+			continue;	
 		}
-		cout<<"new child created"<<endl;
-
+		//cout<<"new child created"<<endl;
 		if (!fork()) { // this is the child process
-
-			close(sockTCP); // child doesn't need the listener -------------------???------------------
-			//printf("%d",numbytes);
+			close(sockTCP); // child doesn't need the listener 
 			char buf[MAXBUFLEN];
-			
-			while (1){
+            int count = 0;
+            int maxTries = 3;
+			while (count<maxTries){
 				memset(buf, 0, sizeof buf);
 				if ((numbytes = recv(new_fd, buf, MAXBUFLEN-1, 0)) == -1) {
 					perror("recv");
 					exit(1);
 				}
-				cout<<numbytes<<endl;
 				if(numbytes == 0){
-					
+					printf("Disconnected \n"); ///////////////////////////////
 					break;
 				}
-				// inet_ntop(their_addr.ss_family,
-				// get_in_addr((struct sockaddr *)&their_addr),
-				// s, sizeof s);
-				// printf("server: got connection from %s\n", s);
-				//fflush(stdout);
-				// string mess = "Hello, world";
-				// int n = mess.length();
-				// char message[n + 1];
-				// strcpy(message, mess.c_str());
-				//cout<<buf<<endl;
-				printf("%s \n",buf);
-				printf("%d \n",strlen(buf));
-				if (send(new_fd, buf, strlen(buf), 0) == -1){
+                //HANDLE THE USERNAME AND PASSWORD
+                // char username[50];
+                // char password[50];
+                char input[100];
+                strcpy(input,buf);
+                char * token = strtok(input, ",");
+                char * username = token;
+                token = strtok(NULL, ",");
+                char * password = token;
+
+                cout<<username<<endl;
+                
+                cout<<password<<endl;
+                cout<<buf<<endl;
+                encrypt(buf);
+                cout<<buf<<endl;
+                if ((numbytes = sendto(sockUDP, buf, strlen(buf), 0,
+                    pC->ai_addr, pC->ai_addrlen)) == -1) {
+                perror("talker: sendto");
+                exit(1);
+                }
+                printf("talker: sent %d bytes to %s\n", numbytes, buf);
+
+                char responseC[MAXBUFLEN];
+                struct sockaddr_storage their_addr;
+                socklen_t addr_len;
+                addr_len = sizeof their_addr;
+                if ((numbytes = recvfrom(sockUDP, responseC, MAXBUFLEN-1 , 0,
+                    (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+                    perror("recvfrom");
+                    exit(1);
+                }
+                cout<<responseC<<endl;
+                char messageClient[MAXBUFLEN];
+                
+                if(responseC[0]=='0'){
+                    count++;
+                    //printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
+                    strcpy(messageClient,"HELLO");
+                    printf("Authentication failed: Username Does not exist \n");
+                    printf("Attempts remaining: %d \n",maxTries-count);
+                }
+                else if(responseC[0]=='1'){
+                    count++;
+                    //printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
+                    printf("Authentication failed: Password does not match \n");
+                    printf("Attempts remaining: %d \n",maxTries-count);
+                }
+                else if(responseC[0]=='2'){
+                    cout<<"Success"<<endl;
+                    //break;
+                }
+                else{
+                    perror("auth");
+                    exit(1);
+                }
+				
+				if (send(new_fd, responseC, strlen(responseC), 0) == -1){
 					perror("send");
 					close(new_fd);
 					exit(0);
 				}
+                if(responseC[0]=='2'){
+                    //printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
+                printf("Authentication is successful \n");
+                freeaddrinfo(servinfo);
+                //close(sockfd);
+                
+
+                //HERE GOES COURSES REQUESTS
+                while(1){
+                    char courseInput[MAXBUFLEN];
+                    memset(courseInput, 0, sizeof courseInput);
+                    if ((numbytes = recv(new_fd, courseInput, MAXBUFLEN-1, 0)) == -1) {
+                        perror("recv");
+                        exit(1);
+				    }
+                    if(numbytes == 0){
+                        //printf("Disconnected \n"); ///////////////////////////////
+                        break;
+                    }
+                    cout<<courseInput<<endl;
+                    // char combinedInput[100];
+                    // strcpy(combinedInput,courseNum);
+                    // strcat(combinedInput,",");
+                    // strcat(combinedInput,category);
+                    // strcat(combinedInput,"\0");
+                    // cout<<combinedInput<<endl;
+                    struct sockaddr_in sin;
+                    socklen_t len = sizeof(sin);
+                    if (getsockname(sockUDP, (struct sockaddr *)&sin, &len) == -1)
+                        perror("getsockname");
+                    else
+                        printf("port number in use: %d\n", ntohs(sin.sin_port));
+
+                    char course[2];
+                    memcpy(course, courseInput , 2);
+                    cout<<"the course is:";
+                    cout<<course<<endl;
+                    //if(courseInput.compare("CS")==0){
+                    if(strcmp(course,"CS")==0){
+                        if ((numbytes = sendto(sockUDP, courseInput, strlen(courseInput), 0,
+                        pCS->ai_addr, pCS->ai_addrlen)) == -1) {
+                        perror("talker: sendto");
+                        exit(1);
+                        }
+                        printf("talker: sent %d bytes to CSServer %s\n", numbytes, courseInput);
+
+                        //char buf[MAXBUFLEN];
+                        memset(buf, 0, sizeof buf);
+                        struct sockaddr_storage their_addr;
+                        socklen_t addr_len;
+                        addr_len = sizeof their_addr;
+                        if ((numbytes = recvfrom(sockUDP, buf, MAXBUFLEN-1 , 0,
+                            (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+                            perror("recvfrom");
+                            exit(1);
+                        }
+                        cout<<buf<<endl;
+                        if (send(new_fd, buf, strlen(buf), 0) == -1){
+                            perror("send");
+                            close(new_fd);
+                            exit(0);
+                        }
+                        memset(buf, 0, sizeof buf);
+                    }
+                    //else if(courseInput.compare("EE")==0){
+                    else if(strcmp(course,"EE")==0){
+                        if ((numbytesEE = sendto(sockUDP, courseInput, strlen(courseInput), 0,
+                        pEE->ai_addr, pEE->ai_addrlen)) == -1) {
+                        perror("talker: sendto");
+                        exit(1);
+                        }
+                        printf("talker: sent %d bytes to EEServer %s\n", numbytesEE, courseInput);
+
+                        char buf[MAXBUFLEN];
+                        memset(buf, 0, sizeof buf);
+                        struct sockaddr_storage their_addr;
+                        socklen_t addr_len;
+                        addr_len = sizeof their_addr;
+                        if ((numbytesEE = recvfrom(sockUDP, buf, MAXBUFLEN-1 , 0,
+                            (struct sockaddr *)&their_addr, &addr_len)) == -1) {
+                            perror("recvfrom");
+                            exit(1);
+                        }
+                        cout<<buf<<endl;
+
+                        if (send(new_fd, buf, strlen(buf), 0) == -1){
+                            perror("send");
+                            close(new_fd);
+                            exit(0);
+                        }
+                        memset(buf, 0, sizeof buf);
+                        
+                    }
+                    else{
+                        cout<<"Wrong course input"<<endl;
+                        memset(buf, 0, sizeof buf);
+                        strcpy(buf,"Wrong course input");
+                        if (send(new_fd, buf, strlen(buf), 0) == -1){
+                            perror("send");
+                            close(new_fd);
+                            exit(0);
+                        }
+                        memset(buf, 0, sizeof buf);
+
+                    }
+                    //char encryptedInput[100];
+
+                }
+                //freeaddrinfo(servinfo);
+
+                }
 
 			}
-			
+			if(count==maxTries){
+                printf("Authentication Failed for 3 attempts. Client will shut down. \n");
+                //freeaddrinfo(servinfo);
+                //close(sockfd);
+            }
+            
 			close(new_fd);
 			exit(0);
 		}
 		//close(new_fd);  // parent doesn't need this
 		//exit(0);
-    }
-    
-    int count = 0;
-    int maxTries = 3;
-    char username[50];
-    while(count < maxTries){
-        cout<<"Please enter the username: ";
-        //char username[50];
-        cin.getline(username,50); //take the message as input
-        //int i, j, length,key;
-        encrypt(username);
-        cout<<"Please enter the password: ";
-        char password[50];
-        cin.getline(password,50);
-        encrypt(password);
-        printf("Encrypted message: %s \n", username);
-        printf("Encrypted password: %s \n", password);
-        char encryptedInput[100];
-        strcpy(encryptedInput,username);
-        strcat(encryptedInput,",");
-        strcat(encryptedInput,password);
-        strcat(encryptedInput,"\0");
-        printf("encryted msg: %s\n",encryptedInput);
-        if ((numbytes = sendto(sockUDP, encryptedInput, strlen(encryptedInput), 0,
-			 p->ai_addr, p->ai_addrlen)) == -1) {
-		perror("talker: sendto");
-		exit(1);
-	    }
-
-        printf("talker: sent %d bytes to %s\n", numbytes, encryptedInput);
-
-        char buf[MAXBUFLEN];
-        struct sockaddr_storage their_addr;
-        socklen_t addr_len;
-        addr_len = sizeof their_addr;
-        if ((numbytes = recvfrom(sockUDP, buf, MAXBUFLEN-1 , 0,
-            (struct sockaddr *)&their_addr, &addr_len)) == -1) {
-            perror("recvfrom");
-            exit(1);
-        }
-        cout<<buf<<endl;
-        if(buf[0]=='0'){
-            count++;
-            printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
-            printf("Authentication failed: Username Does not exist \n");
-            printf("Attempts remaining: %d \n",maxTries-count);
-        }
-        else if(buf[0]=='1'){
-            count++;
-            printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
-            printf("Authentication failed: Password does not match \n");
-            printf("Attempts remaining: %d \n",maxTries-count);
-        }
-        else if(buf[0]=='2'){
-            cout<<"Success"<<endl;
-            break;
-        }
-        else{
-            perror("auth");
-            exit(1);
-        }
-
-
-    }
-    if(count==maxTries){
-        printf("Authentication Failed for 3 attempts. Client will shut down. \n");
-        freeaddrinfo(servinfo);
-	    //close(sockfd);
-    }
-    else{
-        printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
-        printf("Authentication is successful \n");
-        freeaddrinfo(servinfo);
-	    //close(sockfd);
-        
-
-        //HERE GOES COURSES REQUESTS
-        while(1){
-            cout<<"Please enter the course code to query: ";
-            char courseNum[50];
-            cin.getline(courseNum,50); //take the message as input
-            cout<<"Please enter the category (Credit / Professor / Days / CourseName): ";
-            char category[50];
-            cin.getline(category,50);
-            // string courseName = courseNum.substr(0,2);
-            string courseName;
-            courseName.push_back(courseNum[0]);
-            courseName.push_back(courseNum[1]);
-            char combinedInput[100];
-            strcpy(combinedInput,courseNum);
-            strcat(combinedInput,",");
-            strcat(combinedInput,category);
-            strcat(combinedInput,"\0");
-            cout<<combinedInput<<endl;
-            struct sockaddr_in sin;
-            socklen_t len = sizeof(sin);
-            if (getsockname(sockUDP, (struct sockaddr *)&sin, &len) == -1)
-                perror("getsockname");
-            else
-                printf("port number in use: %d\n", ntohs(sin.sin_port));
-
-            if(courseName.compare("CS")==0){
-                if ((numbytes = sendto(sockUDP, combinedInput, strlen(combinedInput), 0,
-                p->ai_addr, p->ai_addrlen)) == -1) {
-                perror("talker: sendto");
-                exit(1);
-                }
-                printf("talker: sent %d bytes to %s\n", numbytes, courseNum);
-
-                char buf[MAXBUFLEN];
-                memset(buf, 0, sizeof buf);
-                struct sockaddr_storage their_addr;
-                socklen_t addr_len;
-                addr_len = sizeof their_addr;
-                if ((numbytes = recvfrom(sockUDP, buf, MAXBUFLEN-1 , 0,
-                    (struct sockaddr *)&their_addr, &addr_len)) == -1) {
-                    perror("recvfrom");
-                    exit(1);
-                }
-                cout<<buf<<endl;
-                memset(buf, 0, sizeof buf);
-            }
-            else if(courseName.compare("EE")==0){
-                if ((numbytesEE = sendto(sockUDP, combinedInput, strlen(combinedInput), 0,
-                pEE->ai_addr, pEE->ai_addrlen)) == -1) {
-                perror("talker: sendto");
-                exit(1);
-                }
-                printf("talker: sent %d bytes to %s\n", numbytesEE, courseNum);
-
-                char buf[MAXBUFLEN];
-                memset(buf, 0, sizeof buf);
-                struct sockaddr_storage their_addr;
-                socklen_t addr_len;
-                addr_len = sizeof their_addr;
-                if ((numbytesEE = recvfrom(sockUDP, buf, MAXBUFLEN-1 , 0,
-                    (struct sockaddr *)&their_addr, &addr_len)) == -1) {
-                    perror("recvfrom");
-                    exit(1);
-                }
-                cout<<buf<<endl;
-                memset(buf, 0, sizeof buf);
-                
-            }
-            else{
-                cout<<"Wrong course input"<<endl;
-            }
-            //char encryptedInput[100];
-
-        }
-        freeaddrinfo(servinfo);
-
-
-
-
-    }
-	
-
-	
-   
+    }	
 }

@@ -81,6 +81,8 @@ int main()
 	// printf("client: connecting to %s\n", s);
 
 	freeaddrinfo(servinfo); // all done with this structure
+	int count = 0;
+	int maxTries = 3;
     while(1){
         cout<<"Please enter the username: ";
         char username[50];
@@ -89,16 +91,24 @@ int main()
         cout<<"Please enter the password: ";
         char password[50];
         cin.getline(password,50);
-		int sentvalue = strlen(username);
-		if(strlen(username)==0){
-			username[0] = '\n';
+		char combinedInput[100];
+		strcpy(combinedInput,username);
+        strcat(combinedInput,",");
+        strcat(combinedInput,password);
+        strcat(combinedInput,"\0");
+
+		int sentvalue = strlen(combinedInput);
+		if(strlen(combinedInput)==0){
+			combinedInput[0] = '\n';
 			sentvalue = 1;
+			printf("HERE\n");
 		}
-        if (send(sockfd, username, sentvalue, 0) == -1){
+
+        if (send(sockfd, combinedInput, sentvalue, 0) == -1){
             perror("send");
         }
-		printf("%d",strlen(username));
-		printf("sent %s to server",username);
+		printf("%d",strlen(combinedInput));
+		printf("sent %s to server",combinedInput);
 
         if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
             perror("recv");
@@ -114,6 +124,63 @@ int main()
             exit(0);
             return 0;
         }
+		if(buf[0]=='0'){
+            count++;
+            //printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
+            printf("Authentication failed: Username Does not exist \n");
+            printf("Attempts remaining: %d \n",maxTries-count);
+        }
+        else if(buf[0]=='1'){
+            count++;
+            //printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
+            printf("Authentication failed: Password does not match \n");
+            printf("Attempts remaining: %d \n",maxTries-count);
+        }
+        else if(buf[0]=='2'){
+            //printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
+        	printf("Authentication is successful \n");
+			while(1){
+				cout<<"Please enter the course code to query: ";
+				char courseNum[50];
+				cin.getline(courseNum,50); //take the message as input
+				cout<<"Please enter the category (Credit / Professor / Days / CourseName): ";
+				char category[50];
+				cin.getline(category,50);
+				// string courseName = courseNum.substr(0,2);
+				string courseName;
+				courseName.push_back(courseNum[0]);
+				courseName.push_back(courseNum[1]);
+				char courseLookup[100];
+				strcpy(courseLookup,courseNum);
+				strcat(courseLookup,",");
+				strcat(courseLookup,category);
+				strcat(courseLookup,"\0");
+				cout<<courseLookup<<endl;
+				if (send(sockfd, courseLookup, strlen(courseLookup), 0) == -1){
+					perror("send");
+				}
+				printf("%d",strlen(courseLookup));
+				printf("sent %s to server",courseLookup);
+				memset(buf, 0, sizeof buf);
+				if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+					perror("recv");
+					exit(1);
+				}
+
+				buf[numbytes] = '\0';
+				cout<<"received:";
+				cout<<buf<<endl;
+
+			}
+        }
+        else{
+            perror("auth");
+            exit(1);
+        }
+
+		if(count == maxTries){
+			break;
+		}
 
     }
     

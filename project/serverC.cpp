@@ -147,12 +147,8 @@ int main(void) {
             perror("recvfrom");
             exit(1);
         }
-
         printf("The ServerC received an authentication request from the Main Server.\n");
-        //printf("listener: packet is %d bytes long\n", numbytes);
         buf[numbytes] = '\0';
-        //printf("listener: packet contains \"%s\"\n", buf);
-
         vector<string> v;
         stringstream ss(buf);
         while (ss.good()) {
@@ -163,24 +159,14 @@ int main(void) {
         string username = v[0];
         string password = v[1];
         char auth[2];
-        //int auth = 0;
-        //char* auth[MAXBUFLEN];
         auth[0] = '0';
-        //strcpy(auth,'0');
-        //auth = "FAIL_NO_USER";
         for(size_t i=0;i<creds.size();i++)
         {    
             if(strcmp(username.c_str(),creds[i].username.c_str())==0){
-                cout<<"got username right"<<endl;
-                //auth = 1;     
-                //auth = "FAIL_PASS_NO_MATCH";
-                //strcpy(auth,'1');
+                //right username
                 auth[0]='1';
                 if(strcmp(password.c_str(),creds[i].password.c_str())==0){
-                    cout<<"both right"<<endl;
-                    //auth = 2;
-                    //auth = "PASS";
-                    //strcpy(auth,'2');
+                    //correct username & password
                     auth[0]='2';
                     break;
                 }
@@ -194,8 +180,7 @@ int main(void) {
 		    perror("serverC: sendto");
 		    exit(1);
 	    }
-        cout<<"The ServerC finished sending the response to the Main Server.";
-        cout<<auth<<endl;
+        cout<<"The ServerC finished sending the response to the Main Server."<<endl;
     }
     close(sockfd);
     return 0;

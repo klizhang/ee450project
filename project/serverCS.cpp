@@ -134,7 +134,7 @@ int main() {
             exit(1);
         }
         buf[numbytes] = '\0';
-        cout<<buf<<endl;
+        
         vector<string> v;
         stringstream ss(buf);
         while (ss.good()) {
