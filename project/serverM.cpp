@@ -294,7 +294,7 @@ int main() {
                 char * token = strtok(input, ",");
                 char * username = token;
                 token = strtok(NULL, ",");
-                char * password = token;
+                //char * password = token;
                 encrypt(buf);
                 printf("The main server received the authentication for %s using TCP over port %s \n",username,TCPMPORT);
                 if ((numbytes = sendto(sockUDP, buf, strlen(buf), 0,
@@ -346,7 +346,13 @@ int main() {
                             break;
                         }
                         //cout<<courseInput<<endl;
-                        
+                        char courses[100];
+                        strcpy(courses,courseInput);
+                        char * token = strtok(courses, ",");
+                        char * courseNum = token;
+                        token = strtok(NULL, ",");
+                        char * category = token;
+                        printf("The main server received from %s to query course %s about %s using TCP over port %s.\n",username,courseNum,category,TCPMPORT);
                         char course[2];
                         memcpy(course, courseInput , 2);
                         //cout<<"the course is:";
