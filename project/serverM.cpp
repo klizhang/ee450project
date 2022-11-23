@@ -285,32 +285,24 @@ int main() {
 					exit(1);
 				}
 				if(numbytes == 0){
-					printf("Disconnected \n"); ///////////////////////////////
+					//printf("Disconnected \n"); ///////////////////////////////
 					break;
 				}
                 //HANDLE THE USERNAME AND PASSWORD
-                // char username[50];
-                // char password[50];
                 char input[100];
                 strcpy(input,buf);
                 char * token = strtok(input, ",");
                 char * username = token;
                 token = strtok(NULL, ",");
                 char * password = token;
-                cout<<"username is:";
-                cout<<username<<endl;
-                cout<<"password is: ";
-                cout<<password<<endl;
-                cout<<buf<<endl;
                 encrypt(buf);
-                cout<<buf<<endl;
-                printf("The main server received the authentication for %s using TCP over port <client> \n",username);
+                printf("The main server received the authentication for %s using TCP over port %s \n",username,TCPMPORT);
                 if ((numbytes = sendto(sockUDP, buf, strlen(buf), 0,
                     pC->ai_addr, pC->ai_addrlen)) == -1) {
                 perror("talker: sendto");
                 exit(1);
                 }
-                printf("talker: sent %d bytes to %s\n", numbytes, buf);
+                //printf("talker: sent %d bytes to %s\n", numbytes, buf);
                 printf("The main server sent an authentication request to serverC.\n");
 
                 char responseC[MAXBUFLEN];
@@ -322,13 +314,11 @@ int main() {
                     perror("recvfrom");
                     exit(1);
                 }
-                cout<<responseC<<endl;
+                //cout<<responseC<<endl;
                 printf("The main server received the result of the authentication request from ServerC using UDP over port %s. \n",CREDPORT);
                 //char messageClient[MAXBUFLEN];
-                
                 if(responseC[0]=='0' || responseC[0]=='1'){
                     count++;
-
                 }
                 else if(responseC[0]!='2'){
                     perror("auth");
@@ -355,28 +345,20 @@ int main() {
                             //printf("Disconnected \n"); ///////////////////////////////
                             break;
                         }
-                        cout<<courseInput<<endl;
+                        //cout<<courseInput<<endl;
                         
-                        struct sockaddr_in sin;
-                        socklen_t len = sizeof(sin);
-                        if (getsockname(sockUDP, (struct sockaddr *)&sin, &len) == -1)
-                            perror("getsockname");
-                        else
-                            printf("port number in use: %d\n", ntohs(sin.sin_port));
-
                         char course[2];
                         memcpy(course, courseInput , 2);
-                        cout<<"the course is:";
-                        cout<<course<<endl;
-                        //if(courseInput.compare("CS")==0){
+                        //cout<<"the course is:";
+                        //cout<<course<<endl;
                         if(strcmp(course,"CS")==0){
                             if ((numbytes = sendto(sockUDP, courseInput, strlen(courseInput), 0,
                             pCS->ai_addr, pCS->ai_addrlen)) == -1) {
-                            perror("talker: sendto");
-                            exit(1);
+                                perror("talker: sendto");
+                                exit(1);
                             }
-                            printf("talker: sent %d bytes to CSServer %s\n", numbytes, courseInput);
-
+                            //printf("talker: sent %d bytes to CSServer %s\n", numbytes, courseInput);
+                            cout<<"The main server sent a request to serverCS"<<endl;
                             //char buf[MAXBUFLEN];
                             memset(buf, 0, sizeof buf);
                             struct sockaddr_storage their_addr;
@@ -387,12 +369,14 @@ int main() {
                                 perror("recvfrom");
                                 exit(1);
                             }
-                            cout<<buf<<endl;
+                            //cout<<buf<<endl;
+                            printf("The main server received the response from serverCS using UDP over port %s.\n",CSPORT);
                             if (send(new_fd, buf, strlen(buf), 0) == -1){
                                 perror("send");
                                 close(new_fd);
                                 exit(0);
                             }
+                            printf("The main server sent the query information to the client.\n");
                             memset(buf, 0, sizeof buf);
                         }
                         //else if(courseInput.compare("EE")==0){
@@ -402,8 +386,8 @@ int main() {
                             perror("talker: sendto");
                             exit(1);
                             }
-                            printf("talker: sent %d bytes to EEServer %s\n", numbytesEE, courseInput);
-
+                            //printf("talker: sent %d bytes to EEServer %s\n", numbytesEE, courseInput);
+                            cout<<"The main server sent a request to serverEE"<<endl;
                             char buf[MAXBUFLEN];
                             memset(buf, 0, sizeof buf);
                             struct sockaddr_storage their_addr;
@@ -414,25 +398,27 @@ int main() {
                                 perror("recvfrom");
                                 exit(1);
                             }
-                            cout<<buf<<endl;
-
+                            //cout<<buf<<endl;
+                            printf("The main server received the response from serverEE using UDP over port %s.\n",EEPORT);
                             if (send(new_fd, buf, strlen(buf), 0) == -1){
                                 perror("send");
                                 close(new_fd);
                                 exit(0);
                             }
+                            printf("The main server sent the query information to the client.\n");
                             memset(buf, 0, sizeof buf);
                             
                         }
                         else{
-                            cout<<"Wrong course input"<<endl;
+                            //cout<<"Wrong course input"<<endl;
                             memset(buf, 0, sizeof buf);
-                            strcpy(buf,"Wrong course input");
+                            strcpy(buf,"Wrong input");
                             if (send(new_fd, buf, strlen(buf), 0) == -1){
                                 perror("send");
                                 close(new_fd);
                                 exit(0);
                             }
+                            printf("The main server sent the query information to the client.\n");
                             memset(buf, 0, sizeof buf);
 
                         }

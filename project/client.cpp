@@ -75,15 +75,29 @@ int main()
 		fprintf(stderr, "client: failed to connect\n");
 		return 2;
 	}
-
+	// unsigned int clientPort;
+	// struct sockaddr_in clinetAddress;
+	// bzero(&clinetAddress, sizeof(clinetAddress));
+	// socklen_t len = sizeof(clinetAddress);
+	// getsockname(sockfd, (struct sockaddr *) &clinetAddress, &len);
+	// clientPort = ntohs(clinetAddress.sin_port);
+	// printf("Client's dynamic port number : %u\n", clientPort);
+	struct sockaddr_in sin;
+	socklen_t len = sizeof(sin);
+	if (getsockname(sockfd, (struct sockaddr *)&sin, &len) == -1)
+		perror("getsockname");
+	else
+		printf("port number in use: %d\n", ntohs(sin.sin_port));
 	// inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
 	// 		s, sizeof s);
 	// printf("client: connecting to %s\n", s);
 
 	freeaddrinfo(servinfo); // all done with this structure
+	printf("The client is up and running.\n");
 	int count = 0;
 	int maxTries = 3;
     while(1){
+		
         cout<<"Please enter the username: ";
         char username[50];
         cin.getline(username,50); //take the message as input
@@ -98,47 +112,46 @@ int main()
         strcat(combinedInput,"\0");
 
 		int sentvalue = strlen(combinedInput);
-		if(strlen(combinedInput)==0){
-			combinedInput[0] = '\n';
-			sentvalue = 1;
-			printf("HERE\n");
-		}
+		// if(strlen(combinedInput)==0){
+		// 	combinedInput[0] = '\n';
+		// 	sentvalue = 1;
+		// 	printf("HERE\n");
+		// }
 
         if (send(sockfd, combinedInput, sentvalue, 0) == -1){
             perror("send");
         }
-		printf("%d",strlen(combinedInput));
-		printf("sent %s to server",combinedInput);
+		// printf("%d",strlen(combinedInput));
+		// printf("sent %s to server",combinedInput);
+		printf("%s sent an authentication request to the main server.\n",username);
 
         if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
             perror("recv");
             exit(1);
         }
-
         buf[numbytes] = '\0';
+        //printf("client: received '%s'\n",buf);
 
-        printf("client: received '%s'\n",buf);
-
-        if(strcmp(buf,"exit")==0){
-            close(sockfd);
-            exit(0);
-            return 0;
-        }
+        // if(strcmp(buf,"exit")==0){
+        //     close(sockfd);
+        //     exit(0);
+        //     return 0;
+        // }
 		if(buf[0]=='0'){
             count++;
             //printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
-            printf("Authentication failed: Username Does not exist \n");
+            printf("%s received the result of authentication using TCP over port %d. Authentication failed: Username Does not exist \n",username,ntohs(sin.sin_port));
             printf("Attempts remaining: %d \n",maxTries-count);
         }
         else if(buf[0]=='1'){
             count++;
             //printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
-            printf("Authentication failed: Password does not match \n");
+            printf("%s received the result of authentication using TCP over port %d. Authentication failed: Password does not match \n",username,ntohs(sin.sin_port));
             printf("Attempts remaining: %d \n",maxTries-count);
         }
         else if(buf[0]=='2'){
             //printf("%s received the result of authentication using TCP over port %s.",username,CREDPORT);
-        	printf("Authentication is successful \n");
+            printf("%s received the result of authentication using TCP over port %d. Authentication is successful \n",username,ntohs(sin.sin_port));
 			while(1){
 				cout<<"Please enter the course code to query: ";
 				char courseNum[50];
@@ -155,22 +168,32 @@ int main()
 				strcat(courseLookup,",");
 				strcat(courseLookup,category);
 				strcat(courseLookup,"\0");
-				cout<<courseLookup<<endl;
+				//cout<<courseLookup<<endl;
 				if (send(sockfd, courseLookup, strlen(courseLookup), 0) == -1){
 					perror("send");
 				}
-				printf("%d",strlen(courseLookup));
-				printf("sent %s to server",courseLookup);
+				//printf("%d",strlen(courseLookup));
+				// printf("sent %s to server",courseLookup);
+				printf("%s sent a request to the main server\n",username);
 				memset(buf, 0, sizeof buf);
 				if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
 					perror("recv");
 					exit(1);
 				}
-
 				buf[numbytes] = '\0';
-				cout<<"received:";
-				cout<<buf<<endl;
-
+				// cout<<"received:";
+				// cout<<buf<<endl;
+				printf("The client received the response from the Main server using TCP over port %d.\n",ntohs(sin.sin_port));
+				if(strcmp(buf,"Wrong input")==0){
+					printf("Didn’t find the course: %s\n\n",courseNum);
+				}
+				else if(strcmp(buf,"Wrong category")==0){
+					printf("Didn’t find the category: %s\n\n",category);
+				}
+				else{
+					printf("The %s of %s is %s.\n\n",category,courseNum,buf);
+				}
+				printf("-----Start a new request----- \n");
 			}
         }
         else{
@@ -179,6 +202,7 @@ int main()
         }
 
 		if(count == maxTries){
+			printf("Authentication Failed for 3 attempts. Client will shut down.\n");
 			break;
 		}
 
