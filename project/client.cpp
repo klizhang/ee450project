@@ -15,6 +15,7 @@
 #include <list>
 #include <vector>
 
+
 #include <bits/stdc++.h>
 
 #define LOCALHOST "127.0.0.1" // Host address
@@ -25,6 +26,7 @@ using namespace std;
 //#define PORT "3490" // the port client will be connecting to 
 
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
+
 
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
@@ -156,44 +158,118 @@ int main()
 				cout<<"Please enter the course code to query: ";
 				char courseNum[50];
 				cin.getline(courseNum,50); //take the message as input
-				cout<<"Please enter the category (Credit / Professor / Days / CourseName): ";
-				char category[50];
-				cin.getline(category,50);
-				// string courseName = courseNum.substr(0,2);
-				string courseName;
-				courseName.push_back(courseNum[0]);
-				courseName.push_back(courseNum[1]);
-				char courseLookup[100];
-				strcpy(courseLookup,courseNum);
-				strcat(courseLookup,",");
-				strcat(courseLookup,category);
-				strcat(courseLookup,"\0");
-				//cout<<courseLookup<<endl;
-				if (send(sockfd, courseLookup, strlen(courseLookup), 0) == -1){
-					perror("send");
+				char courses[50];
+				strcpy(courses,courseNum);
+				// char * token = strtok(courses, ",");
+				// char * courseNum = token;
+				// token = strtok(NULL, ",");
+				// char * category = token;
+				// vector<string> array;
+				// char * list[10];
+				list<char*> list;
+				char * token = strtok(courses, " ");
+				while(token != NULL){
+					printf("%s\n",token);
+					list.push_back(token);
+					token = strtok(NULL, " ");
 				}
-				//printf("%d",strlen(courseLookup));
-				// printf("sent %s to server",courseLookup);
-				printf("%s sent a request to the main server\n",username);
-				memset(buf, 0, sizeof buf);
-				if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-					perror("recv");
-					exit(1);
-				}
-				buf[numbytes] = '\0';
-				// cout<<"received:";
-				// cout<<buf<<endl;
-				printf("The client received the response from the Main server using TCP over port %d.\n",ntohs(sin.sin_port));
-				if(strcmp(buf,"Wrong input")==0){
-					printf("Didn’t find the course: %s\n\n",courseNum);
-				}
-				else if(strcmp(buf,"Wrong category")==0){
-					printf("Didn’t find the category: %s\n\n",category);
+				if(list.size()>1){
+					//printf("MULTICOURSE\n");
+					//printf("%s\n",courseNum);
+					//printf("%s\n",token);
+					//printf("%d\n",list.size());
+					long unsigned int size = list.size(); 
+					// for (auto it = list.begin(); it != list.end(); ++it)
+        			// 		cout << ' ' << *it;
+					char multicourse[50];
+					memset(multicourse, 0, sizeof multicourse);
+					for (std::list<char*>::iterator it = list.begin(); it != list.end(); ++it){
+						strcat(multicourse,*it);
+						strcat(multicourse,",");
+						
+						//std::cout << *it;
+					}
+					multicourse[strlen(multicourse)-1]='\0';
+
+					
+					cout<<multicourse<<endl;
+					cout<<size<<endl;
+					if(size<10){
+						if (send(sockfd, multicourse, strlen(multicourse), 0) == -1){
+							perror("send");
+						}
+						//printf("%d",strlen(courseLookup));
+						// printf("sent %s to server",courseLookup);
+						printf("%s sent a request with multiple CourseCode to the main server\n",username);
+						unsigned int i =0;
+						printf("CourseCode: Credits, Professor, Days, Course Name\n");
+						while(i<list.size()){
+							memset(buf, 0, sizeof buf);
+							cout<<"before"<<endl;
+							if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+								perror("recv");
+								exit(1);
+							}
+							cout<<"after"<<endl;
+							buf[numbytes] = '\0';
+							// if(strcmp(buf,"Wrong input,Wrong input,Wrong input,Wrong input")==0){
+							// 	printf("Course not found\n");
+							// }
+							char check[10] = "Wrong";
+							if(strstr(buf,check)!=NULL){
+								char *ptr = strtok(buf,":");
+
+								printf("%s: Course not found\n",ptr);
+							}
+							else{
+								printf("%s\n",buf);
+							}
+							i++;
+						}
+					}
+					else{
+						cout<<"Error: too many inputs (input must be less than 10)"<<endl;
+					}
+					
 				}
 				else{
-					printf("The %s of %s is %s.\n\n",category,courseNum,buf);
+					cout<<"Please enter the category (Credit / Professor / Days / CourseName): ";
+					char category[50];
+					cin.getline(category,50);
+					char courseLookup[100];
+					strcpy(courseLookup,courseNum);
+					strcat(courseLookup,",");
+					strcat(courseLookup,category);
+					strcat(courseLookup,"\0");
+					//cout<<courseLookup<<endl;
+					if (send(sockfd, courseLookup, strlen(courseLookup), 0) == -1){
+						perror("send");
+					}
+					//printf("%d",strlen(courseLookup));
+					// printf("sent %s to server",courseLookup);
+					printf("%s sent a request to the main server\n",username);
+					memset(buf, 0, sizeof buf);
+					if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+						perror("recv");
+						exit(1);
+					}
+					buf[numbytes] = '\0';
+					// cout<<"received:";
+					cout<<buf<<endl;
+					printf("The client received the response from the Main server using TCP over port %d.\n",ntohs(sin.sin_port));
+					if(strcmp(buf,"Wrong input")==0){
+						printf("Didn’t find the course: %s\n\n",courseNum);
+					}
+					else if(strcmp(buf,"Wrong category")==0){
+						printf("Didn’t find the category: %s\n\n",category);
+					}
+					else{
+						printf("The %s of %s is %s.\n\n",category,courseNum,buf);
+					}
+					printf("-----Start a new request----- \n");
 				}
-				printf("-----Start a new request----- \n");
+
+				
 			}
         }
         else{

@@ -13,7 +13,7 @@ serverC: serverC.cpp
 	g++ -g -Wall serverC.cpp -o serverC
 
 client: client.cpp
-	g++ -g -Wall client.cpp -o client
+	g++ -g -Wall -std=c++11 client.cpp -o client
 
 clean:
 	rm -f *.o all
