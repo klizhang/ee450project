@@ -77,12 +77,10 @@ int main() {
     struct sockaddr_storage their_addr;
     char buf[MAXBUFLEN];
     socklen_t addr_len;
-    //char s[INET_ADDRSTRLEN];
 
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // set to AF_INET to use IPv4
     hints.ai_socktype = SOCK_DGRAM;
-    //hints.ai_flags = AI_PASSIVE; // use my IP
 
     if ((rv = getaddrinfo(LOCALHOST, EEPORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));

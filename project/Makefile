@@ -16,5 +16,5 @@ client: client.cpp
 	g++ -g -Wall -std=c++11 client.cpp -o client
 
 clean:
-	rm -f *.o all
+	rm -f *.o serverC serverEE serverCS serverM client
 

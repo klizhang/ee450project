@@ -14,7 +14,6 @@
 #include <fstream> 
 #include <list>
 #include <vector>
-
 #include <bits/stdc++.h>
 
 #define LOCALHOST "127.0.0.1" // Host address
@@ -27,25 +26,6 @@ struct creds_struct{
     string username;
     string password;
 };
-
-void split(char buf[], char username[], char password[]) {
-    char *start_ptr = buf;
-    char *tab_ptr = strchr(start_ptr, ',');
-    if (tab_ptr != NULL){ //There is 1st tab
-      *tab_ptr++ = '\0';
-      username = start_ptr;
-      start_ptr = tab_ptr;
-      printf("start points to: %s",start_ptr);
-
-      password = start_ptr;
-
-    }
-    else{ 
-      printf("Error,no 1st tab found \n");
-      exit(-1);
-    }
-
-}
 
 /*SOURCE from beej*/
 // get sockaddr, IPv4 or IPv6:
@@ -72,7 +52,6 @@ int main(void) {
             getline (myfile,line);
             //https://www.geeksforgeeks.org/program-to-parse-a-comma-separated-string-in-c/#:~:text=Get%20the%20substring%20if%20the,and%20stored%20in%20the%20vector
             stringstream ss(line);
-            // string substr;
             while (ss.good()) {
                 string substr;
                 getline(ss, substr, ',');
@@ -108,7 +87,6 @@ int main(void) {
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_INET; // set to AF_INET to use IPv4
     hints.ai_socktype = SOCK_DGRAM;
-    //hints.ai_flags = AI_PASSIVE; // use my IP
 
     if ((rv = getaddrinfo(LOCALHOST, MYPORT, &hints, &servinfo)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -162,11 +140,9 @@ int main(void) {
         auth[0] = '0';
         for(size_t i=0;i<creds.size();i++)
         {    
-            if(strcmp(username.c_str(),creds[i].username.c_str())==0){
-                //right username
+            if(strcmp(username.c_str(),creds[i].username.c_str())==0){ //right username
                 auth[0]='1';
-                if(strcmp(password.c_str(),creds[i].password.c_str())==0){
-                    //correct username & password
+                if(strcmp(password.c_str(),creds[i].password.c_str())==0){//correct username & password
                     auth[0]='2';
                     break;
                 }
