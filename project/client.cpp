@@ -174,21 +174,13 @@ int main()
 					token = strtok(NULL, " ");
 				}
 				if(list.size()>1){
-					//printf("MULTICOURSE\n");
-					//printf("%s\n",courseNum);
-					//printf("%s\n",token);
-					//printf("%d\n",list.size());
 					long unsigned int size = list.size(); 
-					// for (auto it = list.begin(); it != list.end(); ++it)
-        			// 		cout << ' ' << *it;
 					char multicourse[50];
 					memset(multicourse, 0, sizeof multicourse);
 					for (std::list<char*>::iterator it = list.begin(); it != list.end(); ++it){
 						strcat(multicourse,*it);
 						strcat(multicourse,",");
-						
-						//std::cout << *it;
-					}
+						}
 					multicourse[strlen(multicourse)-1]='\0';
 
 					
@@ -218,10 +210,10 @@ int main()
 							char check[10] = "Wrong";
 							if(strstr(buf,check)!=NULL){
 								char *ptr = strtok(buf,":");
-
 								printf("%s: Course not found\n",ptr);
 							}
 							else{
+								cout<<"aaa"<<endl;
 								printf("%s\n",buf);
 							}
 							i++;
@@ -237,7 +229,9 @@ int main()
 					char category[50];
 					cin.getline(category,50);
 					char courseLookup[100];
-					strcpy(courseLookup,courseNum);
+					memset(courseLookup,0,sizeof courseLookup);
+					strcat(courseLookup,"0");
+					strcat(courseLookup,courseNum);
 					strcat(courseLookup,",");
 					strcat(courseLookup,category);
 					strcat(courseLookup,"\0");

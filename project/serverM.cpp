@@ -9,6 +9,7 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <sys/wait.h>
+#include <time.h>
 #include <iostream>
 #include <string>
 #include <fstream> 
@@ -294,7 +295,6 @@ int main() {
                 char * token = strtok(input, ",");
                 char * username = token;
                 token = strtok(NULL, ",");
-                //char * password = token;
                 encrypt(buf);
                 printf("The main server received the authentication for %s using TCP over port %s \n",username,TCPMPORT);
                 if ((numbytes = sendto(sockUDP, buf, strlen(buf), 0,
@@ -302,9 +302,7 @@ int main() {
                 perror("talker: sendto");
                 exit(1);
                 }
-                //printf("talker: sent %d bytes to %s\n", numbytes, buf);
                 printf("The main server sent an authentication request to serverC.\n");
-
                 char responseC[MAXBUFLEN];
                 struct sockaddr_storage their_addr;
                 socklen_t addr_len;
@@ -314,7 +312,7 @@ int main() {
                     perror("recvfrom");
                     exit(1);
                 }
-                //cout<<responseC<<endl;
+
                 printf("The main server received the result of the authentication request from ServerC using UDP over port %s. \n",CREDPORT);
                 //char messageClient[MAXBUFLEN];
                 if(responseC[0]=='0' || responseC[0]=='1'){
@@ -351,24 +349,25 @@ int main() {
                         char * token = strtok(courses, ",");
                         char * courseNum = token;
                         token = strtok(NULL, ",");
-                        char * category = token;
+                        char * category  = token;
                         // /Credit / Professor / Days / CourseName
-                        if (strcmp(category,"Credit")==0 || strcmp(category,"Professor")==0 || strcmp(category,"Days")==0 || strcmp(category,"CourseName")==0){
+                        //if (strcmp(category,"Credit")==0 || strcmp(category,"Professor")==0 || strcmp(category,"Days")==0 || strcmp(category,"CourseName")==0){
+                        if (courseInput[0]=='0'){
+                            char *correctInput = courseInput+1;
                             printf("The main server received from %s to query course %s about %s using TCP over port %s.\n",username,courseNum,category,TCPMPORT);
                             char course[3];
                             memset(course, 0, sizeof course);
-                            memcpy(course, courseInput , 2);
+                            memcpy(course, correctInput , 2);
                             //cout<<"the course is:";
                             //cout<<course<<endl;
                             if(strcmp(course,"CS")==0){
-                                if ((numbytes = sendto(sockUDP, courseInput, strlen(courseInput), 0,
+                                if ((numbytes = sendto(sockUDP, correctInput, strlen(correctInput), 0,
                                 pCS->ai_addr, pCS->ai_addrlen)) == -1) {
                                     perror("talker: sendto");
                                     exit(1);
                                 }
                                 //printf("talker: sent %d bytes to CSServer %s\n", numbytes, courseInput);
                                 cout<<"The main server sent a request to serverCS"<<endl;
-                                cout<<courseInput<<endl; //--------------------------------
                                 //char buf[MAXBUFLEN];
                                 memset(buf, 0, sizeof buf);
                                 struct sockaddr_storage their_addr;
@@ -391,7 +390,7 @@ int main() {
                             }
                             //else if(courseInput.compare("EE")==0){
                             else if(strcmp(course,"EE")==0){
-                                if ((numbytesEE = sendto(sockUDP, courseInput, strlen(courseInput), 0,
+                                if ((numbytesEE = sendto(sockUDP, correctInput, strlen(correctInput), 0,
                                 pEE->ai_addr, pEE->ai_addrlen)) == -1) {
                                 perror("talker: sendto");
                                 exit(1);
@@ -449,7 +448,6 @@ int main() {
                             }
                             for (std::list<char*>::iterator it = courseList.begin(); it != courseList.end(); ++it){
                                 std::cout << *it<<endl;
-                                printf("The main server received from %s to query course %s about everything using TCP over port %s.\n",username,courseNum,TCPMPORT);
                                 char course2[3];
                                 memset(course2,0,sizeof course2);
                                 memcpy(course2, *it , 2);
@@ -473,6 +471,7 @@ int main() {
                                 cout<<"COURSE IS:";
                                 cout<<course2<<endl;
                                 if(strcmp(course2,"CS")==0){
+                                    printf("The main server received from %s to query course %s about everything using TCP over port %s.\n",username,*it,TCPMPORT);
                                     strcat(response,*it);
                                     strcat(response,": ");
                                     if ((numbytes = sendto(sockUDP, courseCredit, strlen(courseCredit), 0,
@@ -555,6 +554,7 @@ int main() {
                                 }
                                 //else if(courseInput.compare("EE")==0){
                                 else if(strcmp(course2,"EE")==0){
+                                    printf("The main server received from %s to query course %s about everything using TCP over port %s.\n",username,*it,TCPMPORT);
                                     strcat(response,*it);
                                     strcat(response,": ");
                                     if ((numbytesEE = sendto(sockUDP, courseCredit, strlen(courseCredit), 0,
@@ -645,19 +645,23 @@ int main() {
                                 }
                                 else{
                                     //cout<<"Wrong course input"<<endl;
-                                    memset(buf, 0, sizeof buf);
-                                    strcat(buf,"Didn't find the course: ");
-                                    strcat(buf,*it);
-                                    cout<<buf<<endl;
+                                    char buf_1[50];
+                                    usleep(10000);
+                                    memset(buf_1, 0, sizeof buf_1);
+                                    strcat(buf_1,"Didn't find the course: ");
+                                    strcat(buf_1,*it);
+                                    
+                                    cout<<buf_1<<endl;
                                     // strcat(buf.": ")
                                     // strcat(buf,"Wrong input");
-                                    if (send(new_fd, buf, strlen(buf), 0) == -1){
+                                    if (send(new_fd, buf_1, strlen(buf_1), 0) == -1){
                                         perror("send");
                                         close(new_fd);
                                         exit(0);
                                     }
                                     printf("The main server sent the query information to the client.\n");
-                                    memset(buf, 0, sizeof buf);
+                                    memset(buf_1, 0, sizeof buf_1);
+                                    cout<<"debug"<<endl;
                                 }
                             }
                         }
